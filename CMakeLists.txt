@@ -24,6 +24,7 @@ option(BUILD_MODULE_TOOLS "Build the tools module" ON)
 option(BUILD_SDK_PKG "Build install packages for development purposes" ON)
 option(FORCE_OPENCV3 "Force the build to require OpenCV 3" OFF)
 option(FORCE_OPENCV2 "Force the build to require OpenCV 2.4" OFF)
+option(BUILD_BENCH "Build benchmark tests" OFF)
 
 # Installation root
 set(CPACK_SET_DESTDIR true)
@@ -47,7 +48,14 @@ if(WIN32)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
   add_definitions(-DBOOST_ALL_NO_LIB)
 else(WIN32)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-literal-suffix -s")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-literal-suffix")
+  # On Linux, we can do some benchmarking
+  if (BUILD_BENCH)
+    set(CMAKE_CXX_FLAGS
+        "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -save-temps")
+  else(BUILD_BENCH)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -s")
+  endif(BUILD_BENCH)
 endif(WIN32)
 
 # create the cmake-package files
@@ -99,6 +107,13 @@ endif()
 if(BUILD_MODULE_TOOLS)
   add_subdirectory(modules/tools)
 endif()
+
+# For developers only
+if(UNIX)
+  if(BUILD_BENCH)
+    add_subdirectory(bench)
+  endif(BUILD_BENCH)
+endif(UNIX)
 
 ################################################
 ## Sub-modules are done, finish up the cmake package
